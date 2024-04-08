@@ -8,6 +8,8 @@ from datetime import datetime
 import numpy as np
 import time 
 from io import StringIO
+import sys
+
 
 def guessCategory(title : str, content : str):
     for i in category_list:
@@ -19,11 +21,26 @@ def getData(data : pd.Series):
     res = requests.get("https://" + data["links"])
     soup = bs(res.text, "html.parser")
     text = soup.select_one("div.artclView")
+    images_item = soup.select("div.artclView img")
+    attached_item = soup.select("dd.artclInsert li")
     modified = soup.select_one(".artclViewHead dl:nth-child(2) dd")
+    
     if modified is not None:
         data["작성일"] = modified.text
 
     content = text.text#기본 데이터 가져오기
+
+    images = []
+    if images_item != None:
+        for img in images_item:
+            images.append(img["src"])
+
+    attached = []
+    if attached_item != None:
+        for item in attached_item:
+            attached.append({"text": item.text.strip(), "link": getHost("https://" + data["links"]) + item.find("a")["href"]})
+    
+
     source = data["source"]
     
     title = data["제목"]
@@ -33,7 +50,7 @@ def getData(data : pd.Series):
     else:
         category = guessCategory(title, content)
     published_date = datetime.strptime(preprocessDate(data["작성일"]), "%Y.%m.%d").astimezone(local_timezone).isoformat()
-    notice = Notice(title, content, url, category, source, published_date)
+    notice = Notice(title, content, images, attached, url, category, source, published_date)
     return notice
 
 def getHost(url : str):
@@ -84,10 +101,16 @@ if __name__ == "__main__":
     global db
     global local_timezone
     global source_set
+
     db = mw.MongodbWrapper()
     category_list = np.loadtxt("categoryList.csv", dtype=str)
     local_timezone = pytz.timezone('Asia/Seoul')
-    url_list = pd.read_csv("urlList.csv", dtype=str)
-    for idx, data in url_list.iterrows():
-        getList(data['url'], data['source'])
-        time.sleep(1)
+
+    if len(sys.argv) == 3:
+        getList(sys.argv[1], sys.argv[2])
+        
+    else: 
+        url_list = pd.read_csv("urlList.csv", dtype=str)
+        for idx, data in url_list.iterrows():
+            getList(data['url'], data['source'])
+            time.sleep(1)

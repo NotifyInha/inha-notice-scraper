@@ -1,7 +1,6 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from DataModel import Notice
-import certifi
 from Config import connection_string #db 정보
 
 class MongodbWrapper:

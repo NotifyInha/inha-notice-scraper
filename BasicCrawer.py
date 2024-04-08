@@ -57,7 +57,7 @@ def getHost(url : str):
     return url.split("/")[2]
 
 def preprocessDate(url : str):
-    return url.rstrip(".")
+    return url.strip().rstrip(".")
 
 def getList(url : str, source : str):
     res = requests.get(url)
@@ -97,11 +97,13 @@ def getList(url : str, source : str):
         
         time.sleep(0.5)
 
-if __name__ == "__main__":
+
+def Run():
     global db
     global local_timezone
     global source_set
-
+    global category_list
+    
     db = mw.MongodbWrapper()
     category_list = np.loadtxt("categoryList.csv", dtype=str)
     local_timezone = pytz.timezone('Asia/Seoul')
@@ -114,3 +116,6 @@ if __name__ == "__main__":
         for idx, data in url_list.iterrows():
             getList(data['url'], data['source'])
             time.sleep(1)
+
+if __name__ == "__main__":
+    Run()

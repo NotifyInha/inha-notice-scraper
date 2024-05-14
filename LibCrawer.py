@@ -51,12 +51,13 @@ def GetContentandImage(id):
     data = data["data"]
     html_content = data["content"]
     bs_content = bs(html_content, "html.parser")
-    images = bs_content.find_all("img")
-    for img in images:
+    images_html = bs_content.find_all("img")
+    images = []
+    for img in images_html:
         src = img["src"]
-        img["src"] = f"https://lib.inha.ac.kr{src}"
+        images.append(src)
     content = bs_content.text
-    return content
+    return content, images_html
 
 def Run():
     res = requests.get("https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0")
@@ -73,8 +74,8 @@ def Run():
         category = item['bulletinCategory']['name']
         content = GetContentandImage(id)
         source = "정석학술정보관"
-        url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}?max=10&offset=0"
-        time.sleep(1)
+        url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
+        print()
 
 
 if __name__ == "__main__":

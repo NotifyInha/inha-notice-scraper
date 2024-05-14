@@ -10,6 +10,36 @@ import time
 from io import StringIO
 import sys
 
+import logging
+import logging.handlers
+
+from rich.logging import RichHandler
+
+LOG_PATH = "./BasicCrawer.log"
+RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
+FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
+
+MANUAL = False
+
+def set_logger() -> logging.Logger:
+    logging.basicConfig(
+        level="NOTSET",
+        format=RICH_FORMAT,
+        handlers=[RichHandler(rich_tracebacks=True)]
+    )
+    logger = logging.getLogger("rich")
+
+    file_handler = logging.FileHandler(LOG_PATH, mode="a", encoding="utf-8")
+    file_handler.setFormatter(logging.Formatter(FILE_HANDLER_FORMAT))
+    logger.addHandler(file_handler)
+
+    return logger
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    logger = logging.getLogger("rich")
+
+    logger.error("Unexpected exception",
+                 exc_info=(exc_type, exc_value, exc_traceback))
 
 def guessCategory(title : str, content : str):
     for i in category_list:
@@ -85,12 +115,12 @@ def getList(url : str, source : str):
         data = getData(row)
         target = db.need_update(data)#중복된 데이터가 있는지 확인
         if target is None:#새로운 데이터
-            print(f"{data.category}의 공지 {data.title}을 추가합니다.")
+            logger.info(f"{data.category}의 공지 {data.title}을 추가합니다.")
             db.insert(data)
         elif target == False:# 이미 최신 데이터
             pass    
         else:#업데이트 필요
-            print(f"{data.category}의 공지 {data.title}을 업데이트합니다.")
+            logger.info(f"{data.category}의 공지 {data.title}을 업데이트합니다.")
             data.id = target.id
             db.update(data)
             continue
@@ -105,6 +135,7 @@ def Run():
     global category_list
     
     db = mw.MongodbWrapper()
+    logger.info("db connected")
     category_list = np.loadtxt("categoryList.csv", dtype=str)
     local_timezone = pytz.timezone('Asia/Seoul')
 
@@ -114,8 +145,14 @@ def Run():
     else: 
         url_list = pd.read_csv("urlList.csv", dtype=str)
         for idx, data in url_list.iterrows():
-            getList(data['url'], data['source'])
+            try:
+                getList(data['url'], data['source'])
+            except Exception as e:
+                logger.error(f"Fetch Error: {data['source']}", exc_info=sys.exc_info())
             time.sleep(1)
 
 if __name__ == "__main__":
+    logger = set_logger()
+    sys.excepthook = handle_exception
+
     Run()

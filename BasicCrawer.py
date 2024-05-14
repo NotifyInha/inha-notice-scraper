@@ -80,6 +80,7 @@ def getData(data : pd.Series):
     else:
         category = guessCategory(title, content)
     published_date = datetime.strptime(preprocessDate(data["작성일"]), "%Y.%m.%d").astimezone(local_timezone).isoformat()
+    logger.info(f"Get Data: {title} {published_date}")
     notice = Notice(title, content, images, attached, url, category, source, published_date)
     return notice
 

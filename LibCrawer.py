@@ -1,8 +1,9 @@
+from venv import logger
 import pytz
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import MongodbWrapper as mw
+import utils.MongodbWrapper as mw
 from DataModel import Notice
 from datetime import datetime
 import numpy as np
@@ -10,12 +11,20 @@ import time
 from io import StringIO
 import sys
 
+import utils.Logger as Logger
+
 # 메인 공지사항 json 주소
 # https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0
 # 각 게시글 json 주소
 # https://lib.inha.ac.kr/pyxis-api/1/bulletins/1/{id}?nameOption=undefined
 # 실제 게시글 주소
 # https://lib.inha.ac.kr/guide/bulletins/notice/{id}?max=10&offset=0
+
+
+LOG_PATH = "./LibCrawer.log"
+RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
+FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
+
 
 # 메인 게시판에 접속 실패 시 발생하는 예외
 class MainBoardConnectionError(Exception):
@@ -57,7 +66,7 @@ def GetContentandImage(id):
         src = img["src"]
         images.append(src)
     content = bs_content.text
-    return content, images_html
+    return content, images
 
 def Run():
     res = requests.get("https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0")
@@ -72,17 +81,32 @@ def Run():
         title = item['title']
         created_at = ConvertDate(item['lastUpdated'])
         category = item['bulletinCategory']['name']
-        content = GetContentandImage(id)
+        content, images = GetContentandImage(id)
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
-        print()
+        notice = Notice(title, content, images, [],url, category, source, created_at)
+        target = db.need_update(notice)#중복된 데이터가 있는지 확인
+        if target is None:#새로운 데이터
+            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
+            db.insert(notice)
+        elif target == False:# 이미 최신 데이터
+            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")
+            pass    
+        else:#업데이트 필요
+            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
+            notice.id = target.id
+            db.update(notice)
+            continue
+        time.sleep(1)
 
 
 if __name__ == "__main__":
     global db
     db = mw.MongodbWrapper()
+    logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)
+    sys.excepthook = Logger.handle_exception
     try:
         Run()
     except MainBoardConnectionError:
-        print("메인 게시판에 접속 실패했습니다.")
+        logger.error("메인 게시판에 접속 실패했습니다.")
         sys.exit(1)

@@ -11,7 +11,7 @@ from io import StringIO
 import sys
 import utils.Logger as Logger
 
-LOG_PATH = "./BasicCrawer.log"
+LOG_PATH = "./BasicCrawler.log"
 RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 

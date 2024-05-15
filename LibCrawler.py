@@ -21,7 +21,7 @@ import utils.Logger as Logger
 # https://lib.inha.ac.kr/guide/bulletins/notice/{id}?max=10&offset=0
 
 
-LOG_PATH = "./LibCrawer.log"
+LOG_PATH = "./LibCrawl  er.log"
 RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 

@@ -2,7 +2,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import utils.MongodbWrapper as mw
+import utils.DatabaseFactory as DBFactory
 from DataModel import Notice
 from datetime import datetime
 import numpy as np
@@ -90,19 +90,14 @@ def getList(url : str, source : str):
         #자세한 데이터를 가져와서
         row["source"] = source
         data = getData(row)
-        target = db.need_update(data)#중복된 데이터가 있는지 확인
+        target = db.upload(data)
         if target is None:#새로운 데이터
             logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
-            db.insert(data)
         elif target == False:# 이미 최신 데이터
-            logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")
-            pass    
+            logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  
         else:#업데이트 필요
             logger.info(f"{data.source}의 공지 {data.title}을 업데이트합니다.")
-            data.id = target.id
-            db.update(data)
-            continue
-        
+
         time.sleep(0.5)
 
 
@@ -112,7 +107,16 @@ def Run():
     global source_set
     global category_list
     
-    db = mw.MongodbWrapper()
+    factory = DBFactory.BackendFactory()
+    db = factory.get_database()
+    if not db.ping():
+        logger.error("server connection failed try connect directly")
+        factory = DBFactory.MongoDBFactory()
+        db = factory.get_database()
+        if not db.ping():
+            logger.error("db connection failed")
+            return
+        
     logger.info("db connected")
     category_list = np.loadtxt("categoryList.csv", dtype=str, encoding="utf-8")
     local_timezone = pytz.timezone('Asia/Seoul')

@@ -3,7 +3,7 @@ import pytz
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import utils.MongodbWrapper as mw
+import utils.DatabaseFactory as DBFactory
 from DataModel import Notice
 from datetime import datetime
 import numpy as np
@@ -69,6 +69,19 @@ def GetContentandImage(id):
     return content, images
 
 def Run():
+    global db
+
+    factory = DBFactory.BackendFactory()
+    db = factory.get_database()
+    if not db.ping():
+        logger.error("server connection failed try connect directly")
+        factory = DBFactory.MongoDBFactory()
+        db = factory.get_database()
+        if not db.ping():
+            logger.error("db connection failed")
+            return
+        
+        
     res = requests.get("https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0")
     #make res to json
     data = res.json()
@@ -85,24 +98,17 @@ def Run():
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
         notice = Notice(title, content, images, [],url, category, source, created_at)
-        target = db.need_update(notice)#중복된 데이터가 있는지 확인
+        target = db.upload(notice)
         if target is None:#새로운 데이터
-            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
-            db.insert(notice)
+            logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
         elif target == False:# 이미 최신 데이터
-            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")
-            pass    
+            logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  
         else:#업데이트 필요
-            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
-            notice.id = target.id
-            db.update(notice)
-            continue
+            logger.info(f"{data.source}의 공지 {data.title}을 업데이트합니다.")
         time.sleep(1)
 
 
 if __name__ == "__main__":
-    global db
-    db = mw.MongodbWrapper()
     logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)
     sys.excepthook = Logger.handle_exception
     try:

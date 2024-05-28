@@ -1,9 +1,12 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from DataModel import Notice
-from Config import connection_string #db 정보
+from Config import connection_string
+from utils.DatabaseWrapper import DatabaseWrapper
 
-class MongodbWrapper:
+
+#Mongodb에 직접 접속하여 데이터를 추가하거나 업데이트하는 클래스
+class MongodbWrapper(DatabaseWrapper):
     def __init__(self):
         # Read the connection string from a file
         
@@ -17,6 +20,26 @@ class MongodbWrapper:
             print("Pinged your deployment. You successfully connected to MongoDB!")
         except Exception as e:
             print(e)
+
+    def ping(self) -> bool:
+        try:
+            self.client.admin.command('ping')
+            return True
+        except:
+            return False
+        
+    def upload(self,data :Notice):
+        target = self.need_update(data)
+        if target is None:#새로운 데이터
+            self.insert(data)
+            return None
+        elif target == False:# 이미 최신 데이터
+            return False    
+        else:#업데이트 필요
+            data.id = target.id
+            self.update(data)
+            return data
+        
 
     def insert(self, data :Notice):
         # Get the database
@@ -37,15 +60,6 @@ class MongodbWrapper:
                 return item
             return False
         return None
-                
-    def search_by_url(self, url :str):
-        db = self.client["inha_notice"]
-        collection = db["notice"]
-        e = collection.find_one({"url": url})
-        if e is not None:
-            item = Notice.from_dict(e)
-            return item
-        return None
 
     def update(self, data :Notice):
         if data.id is None:
@@ -55,11 +69,6 @@ class MongodbWrapper:
 
         result = collection.update_one({"_id": data.id}, {"$set": data.to_dict()})
         return result.modified_count > 0
-
-    def get_all(self):
-        db = self.client["inha_notice"]
-        collection = db["notice"]
-        return collection.find()
         
     def _check_duplicate(self, data :Notice):
         db = self.client["inha_notice"]
@@ -67,10 +76,5 @@ class MongodbWrapper:
         return collection.find_one({"url": data.url}) is not None
 
 if __name__ == "__main__":
-    mw = MongodbWrapper()
-    test = Notice.from_dict(mw.get_all()[0])
-    test.published_date = "2024-03-01T00:00:00+09:00"
-    test.title = "test"
-    test.content = "test"
-    mw.update(test)
+    pass
     

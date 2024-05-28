@@ -99,7 +99,7 @@ def Run():
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
         notice = Notice(title, content, images, [],url, category, source, created_at)
         target = db.upload(notice)
-        if target is None:#새로운 데이터
+        if target == True:#새로운 데이터
             logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
         elif target == False:# 이미 최신 데이터
             logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  

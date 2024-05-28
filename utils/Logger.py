@@ -10,7 +10,7 @@ MANUAL = False
 
 def set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT) -> logging.Logger:
     logging.basicConfig(
-        level="NOTSET",
+        level="INFO",
         format=RICH_FORMAT,
         handlers=[RichHandler(rich_tracebacks=True)]
     )

@@ -32,7 +32,7 @@ class MongodbWrapper(DatabaseWrapper):
         target = self.need_update(data)
         if target is None:#새로운 데이터
             self.insert(data)
-            return None
+            return True
         elif target == False:# 이미 최신 데이터
             return False    
         else:#업데이트 필요

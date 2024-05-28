@@ -35,6 +35,7 @@ def getData(data : pd.Series):
         data["작성일"] = modified.text
 
     content = text.text#기본 데이터 가져오기
+    content = content.replace("\xa0", u" ")
 
     images = []
     if images_item != None:
@@ -50,6 +51,7 @@ def getData(data : pd.Series):
     source = data["source"]
     
     title = data["제목"]
+    title = title.replace("\xa0", u" ")
     url = data["links"]
     if data["제목"].strip()[0] == "[":#카테고리 유추
         category = data["제목"].split("]")[0][1:]
@@ -91,14 +93,14 @@ def getList(url : str, source : str):
         row["source"] = source
         data = getData(row)
         target = db.upload(data)
-        if target is None:#새로운 데이터
+        if target == True:#새로운 데이터
             logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
         elif target == False:# 이미 최신 데이터
             logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  
         else:#업데이트 필요
             logger.info(f"{data.source}의 공지 {data.title}을 업데이트합니다.")
 
-        time.sleep(0.5)
+        # time.sleep(0.5)
 
 
 def Run():

@@ -100,11 +100,11 @@ def Run():
         notice = Notice(title, content, images, [],url, category, source, created_at)
         target = db.upload(notice)
         if target == True:#새로운 데이터
-            logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
+            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
         elif target == False:# 이미 최신 데이터
-            logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  
+            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")  
         else:#업데이트 필요
-            logger.info(f"{data.source}의 공지 {data.title}을 업데이트합니다.")
+            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
         time.sleep(1)
 
 

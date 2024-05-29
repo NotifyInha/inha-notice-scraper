@@ -1,3 +1,4 @@
+import asyncio
 from venv import logger
 import pytz
 import requests
@@ -21,10 +22,12 @@ import utils.Logger as Logger
 # https://lib.inha.ac.kr/guide/bulletins/notice/{id}?max=10&offset=0
 
 
-LOG_PATH = "./LibCrawl  er.log"
+LOG_PATH = "./LibCrawler.log"
 RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 
+IGNORE_DAYS = 3
+local_timezone = pytz.timezone('Asia/Seoul')
 
 # 메인 게시판에 접속 실패 시 발생하는 예외
 class MainBoardConnectionError(Exception):
@@ -68,19 +71,30 @@ def GetContentandImage(id):
     content = bs_content.text
     return content, images
 
-def Run():
+async def process_notice(notice):
+    try:
+        target = await db.upload(notice)
+        if target == True:
+            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
+        elif target == False:
+            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")
+        else:
+            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
+    except Exception as e:
+        logger.error(f"공지 처리 중 오류 발생: {e}")
+
+async def Run():
     global db
 
     factory = DBFactory.BackendFactory()
     db = factory.get_database()
-    if not db.ping():
+    if not await db.ping():
         logger.error("server connection failed try connect directly")
         factory = DBFactory.MongoDBFactory()
         db = factory.get_database()
-        if not db.ping():
+        if not await db.ping():
             logger.error("db connection failed")
             return
-        
         
     res = requests.get("https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0")
     #make res to json
@@ -89,30 +103,28 @@ def Run():
         print("Failed to get data")
         raise MainBoardConnectionError()
     data = data["data"]
-    for item in data['list']:
+    today = datetime.today().astimezone(local_timezone)
+    for item in data['list']:    
         id = item['id']
         title = item['title']
         created_at = ConvertDate(item['lastUpdated'])
+        diff = today - datetime.fromisoformat(created_at)
+        if diff.days > IGNORE_DAYS:#일주일 전의 데이터는 무시
+            continue
         category = item['bulletinCategory']['name']
         content, images = GetContentandImage(id)
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
-        notice = Notice(title, content, images, [],url, category, source, created_at)
-        target = db.upload(notice)
-        if target == True:#새로운 데이터
-            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
-        elif target == False:# 이미 최신 데이터
-            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")  
-        else:#업데이트 필요
-            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
-        time.sleep(1)
-
+        notice = Notice(title, content, images, [], url, category, source, created_at)
+        asyncio.create_task(process_notice(notice))
+        
+        await asyncio.sleep(1)  # 1초 간격으로 요청 보내기
 
 if __name__ == "__main__":
     logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)
     sys.excepthook = Logger.handle_exception
     try:
-        Run()
+        asyncio.run(Run())
     except MainBoardConnectionError:
         logger.error("메인 게시판에 접속 실패했습니다.")
         sys.exit(1)

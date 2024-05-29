@@ -3,9 +3,9 @@ from abc import ABC, abstractmethod
 from DataModel import Notice
 class DatabaseWrapper(ABC):
     @abstractmethod
-    def ping(self) -> bool:
+    async def ping(self) -> bool:
         pass
 
     @abstractmethod
-    def upload(self,data :Notice):
+    async def upload(self,data :Notice):
         pass

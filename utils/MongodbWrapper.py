@@ -4,7 +4,7 @@ from DataModel import Notice
 from Config import connection_string
 from utils.DatabaseWrapper import DatabaseWrapper
 
-
+#TODO : Mongodb controller를 Motor로 변경
 #Mongodb에 직접 접속하여 데이터를 추가하거나 업데이트하는 클래스
 class MongodbWrapper(DatabaseWrapper):
     def __init__(self):
@@ -61,7 +61,7 @@ class MongodbWrapper(DatabaseWrapper):
             return False
         return None
 
-    def update(self, data :Notice):
+    async def update(self, data :Notice):
         if data.id is None:
             raise ValueError("The data must have an id to update")
         db = self.client["inha_notice"]

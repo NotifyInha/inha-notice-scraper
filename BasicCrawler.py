@@ -1,3 +1,4 @@
+import asyncio
 import pytz
 import requests
 from bs4 import BeautifulSoup as bs
@@ -16,6 +17,7 @@ RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 
 MANUAL = False
+IGNORE_DAYS = 3
 
 def guessCategory(title : str, content : str):
     for i in category_list:
@@ -68,7 +70,20 @@ def getHost(url : str):
 def preprocessDate(url : str):
     return url.strip().rstrip(".")
 
-def getList(url : str, source : str):
+async def process_notice(notice):
+    try:
+        target = await db.upload(notice)
+        if target == True:
+            logger.info(f"{notice.source}의 공지 {notice.title}을 추가합니다.")
+        elif target == False:
+            logger.info(f"{notice.source}의 공지 {notice.title}은 이미 최신 데이터입니다.")
+        else:
+            logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
+    except Exception as e:
+        logger.error(f"공지 처리 중 오류 발생: {e}")
+
+
+async def getList(url : str, source : str):
     res = requests.get(url)
     soup = bs(res.text, "html.parser")
     table_html = soup.select_one("table.artclTable")
@@ -87,23 +102,16 @@ def getList(url : str, source : str):
     today = datetime.today().astimezone(local_timezone)
     for idx, row in table.iterrows():
         diff = today - datetime.strptime(preprocessDate(row["작성일"]), "%Y.%m.%d").astimezone(local_timezone)
-        if diff.days > 7:#일주일 전의 데이터는 무시
+        if diff.days > IGNORE_DAYS:#일주일 전의 데이터는 무시
             continue
         #자세한 데이터를 가져와서
         row["source"] = source
         data = getData(row)
-        target = db.upload(data)
-        if target == True:#새로운 데이터
-            logger.info(f"{data.source}의 공지 {data.title}을 추가합니다.")
-        elif target == False:# 이미 최신 데이터
-            logger.info(f"{data.source}의 공지 {data.title}은 이미 최신 데이터입니다.")  
-        else:#업데이트 필요
-            logger.info(f"{data.source}의 공지 {data.title}을 업데이트합니다.")
+        asyncio.create_task(process_notice(data))
 
-        # time.sleep(0.5)
+        await asyncio.sleep(1)
 
-
-def Run():
+async def Run():
     global db
     global local_timezone
     global source_set
@@ -111,11 +119,11 @@ def Run():
     
     factory = DBFactory.BackendFactory()
     db = factory.get_database()
-    if not db.ping():
+    if not await db.ping():
         logger.error("server connection failed try connect directly")
         factory = DBFactory.MongoDBFactory()
         db = factory.get_database()
-        if not db.ping():
+        if not await db.ping():
             logger.error("db connection failed")
             return
         
@@ -124,19 +132,19 @@ def Run():
     local_timezone = pytz.timezone('Asia/Seoul')
 
     if len(sys.argv) == 3:
-        getList(sys.argv[1], sys.argv[2])
+        await getList(sys.argv[1], sys.argv[2])
         
     else: 
         url_list = pd.read_csv("urlList.csv", dtype=str)
         for idx, data in url_list.iterrows():
             try:
-                getList(data['url'], data['source'])
+                await getList(data['url'], data['source'])
             except Exception as e:
                 logger.error(f"Fetch Error: {data['source']}", exc_info=sys.exc_info())
-            time.sleep(1)
+            await asyncio.sleep(1)
 
 if __name__ == "__main__":
     logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)
     sys.excepthook = Logger.handle_exception
 
-    Run()
+    asyncio.run(Run())

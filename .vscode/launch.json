@@ -8,7 +8,7 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "BasicCrawler.py",
+            "program": "LibCrawler.py",
             "console": "integratedTerminal"
         }
     ]

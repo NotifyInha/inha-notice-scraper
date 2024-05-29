@@ -1,3 +1,4 @@
+annotated-types==0.7.0
 beautifulsoup4==4.12.3
 bs4==0.0.2
 certifi==2024.2.2
@@ -16,6 +17,8 @@ mdurl==0.1.2
 nltk==3.8.1
 numpy==1.26.4
 pandas==2.2.1
+pydantic==2.7.1
+pydantic_core==2.18.2
 Pygments==2.18.0
 pymongo==4.6.3
 python-dateutil==2.9.0.post0
@@ -30,6 +33,7 @@ six==1.16.0
 soupsieve==2.5
 threadpoolctl==3.4.0
 tqdm==4.66.2
+typing_extensions==4.12.0
 tzdata==2024.1
 urllib3==2.2.1
 webencodings==0.5.1

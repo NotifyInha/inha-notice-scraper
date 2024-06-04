@@ -5,7 +5,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 import utils.DatabaseFactory as DBFactory
-from DataModel import Notice
+from DataModel import Notice, NoticeCreate
 from datetime import datetime
 import numpy as np
 import time 
@@ -49,10 +49,7 @@ def ConvertDate(date):
 
     # datetime 객체에 타임존 정보 추가
     localized_date = korea_tz.localize(date_obj)
-
-    # ISO 8601 형식으로 변환
-    iso_date_string = localized_date.isoformat()
-    return iso_date_string
+    return localized_date
 
 def GetContentandImage(id):
     res = requests.get(f"https://lib.inha.ac.kr/pyxis-api/1/bulletins/1/{id}?nameOption=undefined")
@@ -68,7 +65,7 @@ def GetContentandImage(id):
     for img in images_html:
         src = img["src"]
         images.append(src)
-    content = bs_content.text
+    content = bs_content.get_text(strip=True)
     return content, images
 
 async def process_notice(notice):
@@ -82,6 +79,7 @@ async def process_notice(notice):
             logger.info(f"{notice.source}의 공지 {notice.title}을 업데이트합니다.")
     except Exception as e:
         logger.error(f"공지 처리 중 오류 발생: {e}")
+    
 
 async def Run():
     global db
@@ -108,14 +106,14 @@ async def Run():
         id = item['id']
         title = item['title']
         created_at = ConvertDate(item['lastUpdated'])
-        diff = today - datetime.fromisoformat(created_at)
+        diff = today - created_at
         if diff.days > IGNORE_DAYS:#일주일 전의 데이터는 무시
             continue
         category = item['bulletinCategory']['name']
         content, images = GetContentandImage(id)
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
-        notice = Notice(title, content, images, [], url, category, source, created_at)
+        notice = NoticeCreate(title=title, content=content, images=images, attached=[], url=url, category=category, source=source, published_date=created_at, is_sent_notification=False)
         asyncio.create_task(process_notice(notice))
         
         await asyncio.sleep(1)  # 1초 간격으로 요청 보내기

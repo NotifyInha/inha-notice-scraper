@@ -1,5 +1,5 @@
 import aiohttp
-from DataModel import Notice, NoticeLight
+from DataModel import Notice, NoticeCreate, NoticeGet
 from utils.DatabaseWrapper import DatabaseWrapper
 from urllib import parse
 from Config import server_address
@@ -10,7 +10,7 @@ class BackendWrapper(DatabaseWrapper):
 
     async def ping(self) -> bool:
         async with aiohttp.ClientSession() as session:
-            async with session.get(server_address) as response:
+            async with session.get(server_address + "/api") as response:
                 return response.status == 200
 
     async def check_data(self, data: Notice) -> bool:
@@ -23,22 +23,22 @@ class BackendWrapper(DatabaseWrapper):
                     return False
                 res: dict = res['items'][0]
                 res['_id'] = res.pop("id")
-                return NoticeLight(**res)
+                return NoticeGet(**res)
 
-    async def insert(self, data: Notice):
+    async def insert(self, data: NoticeCreate):
         endpoint = server_address + '/v1/notices'
         async with aiohttp.ClientSession() as session:
-            async with session.post(endpoint, json=data.to_dict()) as response:
+            async with session.post(endpoint, data=data.model_dump_json(),headers={'Content-Type': 'application/json'}) as response:
                 return response.status
 
-    async def update(self, data: Notice):
+    async def update(self, data: NoticeCreate):
         endpoint = server_address + f'/v1/notices/{data.id}'
         async with aiohttp.ClientSession() as session:
-            async with session.put(endpoint, json=data.to_dict()) as response:
+            async with session.put(endpoint, data=data.model_dump_json(),headers={'Content-Type': 'application/json'}) as response:
                 return response.status
 
     async def upload(self, data: Notice):
-        items: NoticeLight = await self.check_data(data)
+        items: NoticeGet = await self.check_data(data)
         if items is False:
             res = await self.insert(data)
             if res == 409:

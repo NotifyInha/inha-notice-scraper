@@ -48,7 +48,7 @@ class MongodbWrapper(DatabaseWrapper):
         collection = db["notice"]
         # Insert the data
         if not self._check_duplicate(data):
-            collection.insert_one(data.to_dict())
+            collection.insert_one(data.model_dump())
         
     def need_update(self, data :Notice):
         db = self.client["inha_notice"]
@@ -67,7 +67,7 @@ class MongodbWrapper(DatabaseWrapper):
         db = self.client["inha_notice"]
         collection = db["notice"]
 
-        result = collection.update_one({"_id": data.id}, {"$set": data.to_dict()})
+        result = collection.update_one({"_id": data.id}, {"$set": data.model_dump()})
         return result.modified_count > 0
         
     def _check_duplicate(self, data :Notice):

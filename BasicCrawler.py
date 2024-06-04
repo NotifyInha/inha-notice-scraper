@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 import utils.DatabaseFactory as DBFactory
-from DataModel import Notice
+from DataModel import Notice, NoticeCreate
 from datetime import datetime
 import numpy as np
 import time 
@@ -61,7 +61,7 @@ def getData(data : pd.Series):
         category = guessCategory(title, content)
     published_date = datetime.strptime(preprocessDate(data["작성일"]), "%Y.%m.%d").astimezone(local_timezone).isoformat()
     logger.info(f"Get Data: {title} {published_date}")
-    notice = Notice(title, content, images, attached, url, category, source, published_date)
+    notice = NoticeCreate(title=title, content=content, images=images, attached=[], url=url, category=category, source=source, published_date=published_date, is_sent_notification=False)
     return notice
 
 def getHost(url : str):

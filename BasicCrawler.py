@@ -26,7 +26,7 @@ def guessCategory(title : str, content : str):
     return "기타"
 
 def getData(data : pd.Series):
-    res = requests.get("https://" + data["links"])
+    res = requests.get(data["links"])
     soup = bs(res.text, "html.parser")
     text = soup.select_one("div.artclView")
     images_item = soup.select("div.artclView img")
@@ -65,7 +65,7 @@ def getData(data : pd.Series):
     return notice
 
 def getHost(url : str):
-    return ''.join(url.split("/")[:3])
+    return '/'.join(url.split("/")[:3])
 
 def preprocessDate(url : str):
     return url.strip().rstrip(".")

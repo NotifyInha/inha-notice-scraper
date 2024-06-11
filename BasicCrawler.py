@@ -65,7 +65,7 @@ def getData(data : pd.Series):
     return notice
 
 def getHost(url : str):
-    return url.split("/")[2]
+    return ''.join(url.split("/")[:3])
 
 def preprocessDate(url : str):
     return url.strip().rstrip(".")

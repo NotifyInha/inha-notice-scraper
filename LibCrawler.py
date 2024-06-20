@@ -84,15 +84,20 @@ async def process_notice(notice):
 async def Run():
     global db
 
-    factory = DBFactory.BackendFactory()
-    db = factory.get_database()
-    if not await db.ping():
-        logger.error("server connection failed try connect directly")
-        factory = DBFactory.MongoDBFactory()
+    if len(sys.argv) == 3:
+        if sys.argv[1] == "nodb":
+            logger.info("No db Flag is set")
+            db = DBFactory.LocalFactory().get_database(sys.argv[2])
+    else:
+        factory = DBFactory.BackendFactory()
         db = factory.get_database()
         if not await db.ping():
-            logger.error("db connection failed")
-            return
+            logger.error("server connection failed try connect directly")
+            factory = DBFactory.MongoDBFactory()
+            db = factory.get_database()
+            if not await db.ping():
+                logger.error("db connection failed")
+                return
         
     res = requests.get("https://lib.inha.ac.kr/pyxis-api/1/bulletin-boards/1/bulletins?nameOption=&isSeq=false&onlyWriter=false&max=10&offset=0")
     #make res to json
@@ -117,6 +122,10 @@ async def Run():
         asyncio.create_task(process_notice(notice))
         
         await asyncio.sleep(1)  # 1초 간격으로 요청 보내기
+    
+    if len(sys.argv) == 3:
+        if sys.argv[1] == "nodb":
+            db.save()
 
 if __name__ == "__main__":
     logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)

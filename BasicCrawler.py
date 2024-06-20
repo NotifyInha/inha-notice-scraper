@@ -116,32 +116,37 @@ async def Run():
     global local_timezone
     global source_set
     global category_list
-    
-    factory = DBFactory.BackendFactory()
-    db = factory.get_database()
-    if not await db.ping():
-        logger.error("server connection failed try connect directly")
-        factory = DBFactory.MongoDBFactory()
+
+    if len(sys.argv) == 3:
+        if sys.argv[1] == "nodb":
+            logger.info("No db Flag is set")
+            db = DBFactory.LocalFactory().get_database(sys.argv[2])
+    else:
+        factory = DBFactory.BackendFactory()
         db = factory.get_database()
         if not await db.ping():
-            logger.error("db connection failed")
-            return
+            logger.error("server connection failed try connect directly")
+            factory = DBFactory.MongoDBFactory()
+            db = factory.get_database()
+            if not await db.ping():
+                logger.error("db connection failed")
+                return
         
     logger.info("db connected")
     category_list = np.loadtxt("categoryList.csv", dtype=str, encoding="utf-8")
     local_timezone = pytz.timezone('Asia/Seoul')
 
+
+    url_list = pd.read_csv("urlList.csv", dtype=str)
+    for idx, data in url_list.iterrows():
+        try:
+            await getList(data['url'], data['source'])
+        except Exception as e:
+            logger.error(f"Fetch Error: {data['source']}", exc_info=sys.exc_info())
+        await asyncio.sleep(1)
     if len(sys.argv) == 3:
-        await getList(sys.argv[1], sys.argv[2])
-        
-    else: 
-        url_list = pd.read_csv("urlList.csv", dtype=str)
-        for idx, data in url_list.iterrows():
-            try:
-                await getList(data['url'], data['source'])
-            except Exception as e:
-                logger.error(f"Fetch Error: {data['source']}", exc_info=sys.exc_info())
-            await asyncio.sleep(1)
+        if sys.argv[1] == "nodb":
+            db.save()
 
 if __name__ == "__main__":
     logger = Logger.set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT)

@@ -47,7 +47,7 @@ def getData(data : pd.Series):
     attached = []
     if attached_item != None:
         for item in attached_item:
-            attached.append({"text": item.text.strip(), "link": getHost("https://" + data["links"]) + item.find("a")["href"]})
+            attached.append({"text": item.text.strip(), "link": getHost(data["links"]) + item.find("a")["href"]})
     
 
     source = data["source"]

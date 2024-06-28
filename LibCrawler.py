@@ -26,7 +26,7 @@ LOG_PATH = "./LibCrawler.log"
 RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 
-IGNORE_DAYS = 3
+IGNORE_DAYS = 5
 local_timezone = pytz.timezone('Asia/Seoul')
 
 # 메인 게시판에 접속 실패 시 발생하는 예외
@@ -65,8 +65,12 @@ def GetContentandImage(id):
     for img in images_html:
         src = img["src"]
         images.append(src)
+    attach_row = data["attachments"]
+    attachments = []
+    for attachment in attach_row:
+        attachments.append({"text": attachment["logicalName"], "link": "https://lib.inha.ac.kr/pyxis-api"+attachment['originalImageUrl']})
     content = bs_content.get_text(strip=True)
-    return content, images
+    return content, images, attachments
 
 async def process_notice(notice):
     try:
@@ -115,10 +119,10 @@ async def Run():
         if diff.days > IGNORE_DAYS:#일주일 전의 데이터는 무시
             continue
         category = item['bulletinCategory']['name']
-        content, images = GetContentandImage(id)
+        content, images,attached = GetContentandImage(id)
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"
-        notice = NoticeCreate(title=title, content=content, images=images, attached=[], url=url, category=category, source=source, published_date=created_at, is_sent_notification=False)
+        notice = NoticeCreate(title=title, content=content, images=images, attached=attached, url=url, category=category, source=source, published_date=created_at, is_sent_notification=False)
         asyncio.create_task(process_notice(notice))
         
         await asyncio.sleep(1)  # 1초 간격으로 요청 보내기

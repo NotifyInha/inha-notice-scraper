@@ -8,8 +8,9 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "BasicCrawler.py",
-            "console": "integratedTerminal"
+            "program": "LibCrawler.py",
+            "console": "integratedTerminal",
+            "args": ["nodb", "res.txt"]
         }
     ]
 }

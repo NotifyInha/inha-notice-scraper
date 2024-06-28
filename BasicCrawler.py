@@ -17,7 +17,7 @@ RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 
 MANUAL = False
-IGNORE_DAYS = 3
+IGNORE_DAYS = 5
 
 def guessCategory(title : str, content : str):
     for i in category_list:
@@ -45,7 +45,7 @@ def getData(data : pd.Series):
             images.append(img["src"])
 
     attached = []
-    if attached_item != None:
+    if attached_item != []:
         for item in attached_item:
             attached.append({"text": item.text.strip(), "link": getHost(data["links"]) + item.find("a")["href"]})
     
@@ -61,7 +61,7 @@ def getData(data : pd.Series):
         category = guessCategory(title, content)
     published_date = datetime.strptime(preprocessDate(data["작성일"]), "%Y.%m.%d").astimezone(local_timezone).isoformat()
     logger.info(f"Get Data: {title} {published_date}")
-    notice = NoticeCreate(title=title, content=content, images=images, attached=[], url=url, category=category, source=source, published_date=published_date, is_sent_notification=False)
+    notice = NoticeCreate(title=title, content=content, images=images, attached=attached, url=url, category=category, source=source, published_date=published_date, is_sent_notification=False)
     return notice
 
 def getHost(url : str):

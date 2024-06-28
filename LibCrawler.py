@@ -26,7 +26,7 @@ LOG_PATH = "./LibCrawler.log"
 RICH_FORMAT = "[%(filename)s:%(lineno)s] >> %(message)s"
 FILE_HANDLER_FORMAT = "[%(asctime)s]\\t%(levelname)s\\t[%(filename)s:%(funcName)s:%(lineno)s]\\t>> %(message)s"
 
-IGNORE_DAYS = 5
+IGNORE_DAYS = 3
 local_timezone = pytz.timezone('Asia/Seoul')
 
 # 메인 게시판에 접속 실패 시 발생하는 예외

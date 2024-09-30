@@ -118,7 +118,10 @@ async def Run():
         diff = today - created_at
         if diff.days > IGNORE_DAYS:#일주일 전의 데이터는 무시
             continue
-        category = item['bulletinCategory']['name']
+        if item['bulletinCategory'] is None:
+            category = "기타"
+        else:
+            category = item['bulletinCategory']['name']
         content, images,attached = GetContentandImage(id)
         source = "정석학술정보관"
         url = f"https://lib.inha.ac.kr/guide/bulletins/notice/{id}"

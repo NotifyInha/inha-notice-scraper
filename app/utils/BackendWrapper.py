@@ -3,7 +3,7 @@ from DataModel import Notice, NoticeCreate, NoticeGet
 from utils.DatabaseWrapper import DatabaseWrapper
 from urllib import parse
 import os
-if os.path.exists('Config.py'):
+if os.path.exists('app/Config.py'):
     from Config import server_address
 else:
     server_address = os.environ['server_address']

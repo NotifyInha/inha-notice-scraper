@@ -2,7 +2,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from DataModel import Notice
 import os
-if os.path.exists('Config.py'):
+if os.path.exists('app/Config.py'):
     from Config import server_address
 else:
     server_address = os.environ['server_address']

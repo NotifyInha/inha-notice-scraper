@@ -1,7 +1,10 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from DataModel import Notice
-from Config import connection_string
+if os.path.exists('Config.py'):
+    from Config import server_address
+else:
+    server_address = os.environ['server_address']
 from utils.DatabaseWrapper import DatabaseWrapper
 
 #TODO : Mongodb controller를 Motor로 변경

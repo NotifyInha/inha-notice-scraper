@@ -8,9 +8,9 @@ class DataBaseFactory(ABC):
     def get_database(self):
         pass
 
-class MongoDBFactory(DataBaseFactory):
-    def get_database(self):
-        return MongodbWrapper()
+# class MongoDBFactory(DataBaseFactory):
+#     def get_database(self):
+#         return MongodbWrapper()
     
 class BackendFactory(DataBaseFactory):
     def get_database(self):

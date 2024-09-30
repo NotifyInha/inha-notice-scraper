@@ -96,9 +96,9 @@ async def Run():
         factory = DBFactory.BackendFactory()
         db = factory.get_database()
         if not await db.ping():
-            logger.error("server connection failed try connect directly")
-            factory = DBFactory.MongoDBFactory()
-            db = factory.get_database()
+            # logger.error("server connection failed try connect directly")
+            # factory = DBFactory.MongoDBFactory()
+            # db = factory.get_database()
             if not await db.ping():
                 logger.error("db connection failed")
                 return

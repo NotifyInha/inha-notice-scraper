@@ -16,7 +16,7 @@ def set_logger(LOG_PATH, RICH_FORMAT, FILE_HANDLER_FORMAT) -> logging.Logger:
     )
     #add now_time to LOG_PATH (for example, BasicCrawer_2024-05-15.log)
     LOG_PATH = LOG_PATH.split(".log")
-    LOG_PATH = "./app/log/"+LOG_PATH[0] + "_" + str(datetime.now().date()) + ".log"
+    LOG_PATH = "./log/"+LOG_PATH[0] + "_" + str(datetime.now().date()) + ".log"
     logger = logging.getLogger("rich")
 
     file_handler = logging.FileHandler(LOG_PATH, mode="a", encoding="utf-8")

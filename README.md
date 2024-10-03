@@ -4,11 +4,4 @@
 
 ## 세팅법
 
-- requirements.txt로 라이브러리 설치
-- Config.py 작성
-
-```python
-connection_string = 연결할db
-```
-
-- Crawer.py로 실행
+추후 수정

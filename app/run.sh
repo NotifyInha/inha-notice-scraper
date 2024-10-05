@@ -4,9 +4,7 @@
 dir_path=$(dirname "${BASH_SOURCE[0]}")
 
 cd $dir_path
-echo $(pwd)
-# 실행
-source "$dir_path/.venv/bin/activate"
+
 python3 "$dir_path/BasicCrawler.py"
 
 # 실행 결과 확인

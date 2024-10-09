@@ -20,3 +20,5 @@ if [ $? -eq 0 ]; then
 else
     echo "LibCrawler 실패"
 fi
+
+exit 0

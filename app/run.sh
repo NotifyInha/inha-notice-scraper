@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 현재 작업 디렉토리 설정
-dir_path=$(dirname "${BASH_SOURCE[0]}")
+dir_path="/code/app"
 
 cd $dir_path
 
